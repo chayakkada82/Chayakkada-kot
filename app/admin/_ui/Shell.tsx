@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAdmin } from "./Store";
+import { PAPERS } from "./receipt";
 import { Btn, Field, Icon, Modal, Switch, cx, inputCls, type IconName } from "./kit";
 
 type Nav = { href: string; label: string; icon: IconName; roles: ("admin" | "staff")[]; requiresKot?: boolean; hideWhen?: (s: { walkInsOnly: boolean; kotEnabled: boolean; orderingEnabled: boolean }) => boolean };
@@ -40,7 +41,7 @@ const Cherry = ({ logo }: { logo?: string }) =>
   );
 
 function Settings({ onClose }: { onClose: () => void }) {
-  const { s, act, toast } = useAdmin();
+  const { s, act, toast, paper, setPaper } = useAdmin();
   const [walkInsOnly, setWalkInsOnly] = useState(s.settings.walkInsOnly);
   const [kotEnabled, setKotEnabled] = useState(s.settings.kotEnabled);
   const [orderingEnabled, setOrderingEnabled] = useState(s.settings.orderingEnabled);
@@ -159,6 +160,19 @@ function Settings({ onClose }: { onClose: () => void }) {
             </div>
           </Field>
           <Btn kind="red" onClick={saveDetails} disabled={saving}>{saving ? "Saving…" : "Save shop details"}</Btn>
+        </div>
+        <div className="space-y-2 border-b border-slate-100 pb-4">
+          <b className="block text-[13.5px] text-slate-900">Printing</b>
+          <p className="text-[12.5px] text-slate-500">The paper the Print button uses straight away, without asking each time.</p>
+          <Field label="Default paper" hint="Thermal bill printers: pick the roll width. Sheet printers: pick the paper size. Saved on this device only, so each counter can have its own.">
+            <select className={inputCls} value={paper} onChange={(e) => setPaper(e.target.value)} aria-label="Default paper">
+              {PAPERS.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </Field>
         </div>
         <div className="flex items-start justify-between gap-4">
           <div>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { APPROVAL_VERBS, type AdminState, type Order, type Session } from "@/lib/types";
 import type { Role } from "@/lib/auth";
 import { round2, rupee } from "@/lib/money";
+import { PAPERS, paperFormat, type PrintFormat } from "./receipt";
 
 /* ------------------------------------------------------------------
    Admin data store: one copy of the server state, kept fresh by a
@@ -47,6 +48,10 @@ type Ctx = {
   printNode: React.ReactNode;
   sound: boolean;
   setSound: (v: boolean) => void;
+  /** the paper the Print buttons use straight away (chosen in Settings → Printing, kept on this device) */
+  paper: string;
+  setPaper: (key: string) => void;
+  printFormat: PrintFormat;
   base: string;
   now: number;
   floor: FloorTab[];
@@ -83,6 +88,25 @@ const soundPref = {
     soundSubs.forEach((f) => f());
   },
 };
+/* the default paper is per device (each counter has its own printer), so it lives in localStorage too */
+const paperSubs = new Set<() => void>();
+const paperPref = {
+  subscribe: (cb: () => void) => (paperSubs.add(cb), () => void paperSubs.delete(cb)),
+  get: () => {
+    try {
+      const v = localStorage.getItem("adm-paper") ?? "";
+      return PAPERS.some((p) => p.key === v) ? v : "t3";
+    } catch {
+      return "t3";
+    }
+  },
+  set: (v: string) => {
+    try {
+      localStorage.setItem("adm-paper", v);
+    } catch {}
+    paperSubs.forEach((f) => f());
+  },
+};
 const noop = () => () => {};
 
 export function AdminProvider({ initial, role, children }: { initial: AdminState; role: Role; children: React.ReactNode }) {
@@ -93,6 +117,7 @@ export function AdminProvider({ initial, role, children }: { initial: AdminState
   const [printNode, setPrintNode] = useState<React.ReactNode>(null);
   const [printTick, setPrintTick] = useState(0);
   const sound = useSyncExternalStore(soundPref.subscribe, soundPref.get, () => true);
+  const paper = useSyncExternalStore(paperPref.subscribe, paperPref.get, () => "t3");
   const origin = useSyncExternalStore(noop, () => window.location.origin, () => "");
   const [now, setNow] = useState(() => Date.now());
   const version = useRef(initial.version);
@@ -134,6 +159,7 @@ export function AdminProvider({ initial, role, children }: { initial: AdminState
   }, []);
 
   const setSound = useCallback((v: boolean) => soundPref.set(v), []);
+  const setPaper = useCallback((v: string) => paperPref.set(v), []);
 
   const chime = useCallback(() => {
     const c = audio.current;
@@ -402,6 +428,9 @@ export function AdminProvider({ initial, role, children }: { initial: AdminState
     printNode,
     sound,
     setSound,
+    paper,
+    setPaper,
+    printFormat: paperFormat(paper),
     base,
     now,
     floor,

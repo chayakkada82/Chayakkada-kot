@@ -45,6 +45,16 @@ export const THERMAL_ROLLS = [2, 3] as const;
 export const SHEET_SIZES = ["A3", "A4", "A5"] as const;
 export const DEFAULT_FORMAT: PrintFormat = { kind: "thermal", roll: 3 };
 
+/** The papers the "Default paper" setting offers; the Print buttons use the chosen one straight away. */
+export const PAPERS: { key: string; label: string; fmt: PrintFormat }[] = [
+  { key: "t2", label: "2 inch thermal roll (58mm)", fmt: { kind: "thermal", roll: 2 } },
+  { key: "t3", label: "3 inch thermal roll (80mm)", fmt: { kind: "thermal", roll: 3 } },
+  { key: "A5", label: "A5 sheet", fmt: { kind: "sheet", size: "A5" } },
+  { key: "A4", label: "A4 sheet", fmt: { kind: "sheet", size: "A4" } },
+  { key: "A3", label: "A3 sheet", fmt: { kind: "sheet", size: "A3" } },
+];
+export const paperFormat = (key: string): PrintFormat => (PAPERS.find((p) => p.key === key) ?? PAPERS[1]).fmt;
+
 /* [paper width, printable width] in mm — the printable strip is narrower than the
    roll so nothing is clipped by the printer's own margins. */
 const ROLL_MM = { 2: [58, 48], 3: [80, 72] } as const;
